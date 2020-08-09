@@ -1,6 +1,5 @@
 from .common import *
 
-
 INTERNAL_IPS = ["localhost", "0.0.0.0"]
 
 # Testing
