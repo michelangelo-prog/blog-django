@@ -1,0 +1,31 @@
+version: '2'
+
+services:
+  postgres:
+    container_name: postgres
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    env_file:
+      - ./.envs/.local/.postgres
+    ports:
+      - 5432:5432
+
+  blog_app:
+    container_name: blog-app
+    build:
+      context: ./blog_app
+      dockerfile: ./compose/local/Dockerfile
+    restart: always
+    env_file:
+      - ./.envs/.local/.postgres
+      - ./.envs/.local/.blog_app
+    command: >
+      su -m app_user -c "python wait_for_postgres.py &&
+               ./manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./blog_app:/usr/src/app
