@@ -6,15 +6,6 @@ from .behaviors import Timestampable
 
 
 class PostManager(models.Manager):
-    def get_published_post(self, slug):
-        return (
-            self.filter(
-                status=Post.STATUS.PUBLISH, publish_date__lte=timezone.now(), slug=slug
-            )
-            .order_by()
-            .first()
-        )
-
     def get_published_posts(self):
         return self.filter(
             status=Post.STATUS.PUBLISH, publish_date__lte=timezone.now()
@@ -22,11 +13,11 @@ class PostManager(models.Manager):
 
 
 class Post(Timestampable, models.Model):
-    objects = PostManager()
-
     class STATUS(models.IntegerChoices):
         DRAFT = (0, "draft")
         PUBLISH = (1, "publish")
+
+    objects = PostManager()
 
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="blog_posts"
