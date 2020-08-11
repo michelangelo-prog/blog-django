@@ -31,7 +31,9 @@ class Post(Timestampable, models.Model):
 
     @property
     def is_published(self):
-        return self.status == self.STATUS.PUBLISH and self.publish_date <= timezone.now()
+        return (
+            self.status == self.STATUS.PUBLISH and self.publish_date <= timezone.now()
+        )
 
     def __str__(self):
         return self.title
