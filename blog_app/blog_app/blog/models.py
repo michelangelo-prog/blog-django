@@ -29,5 +29,9 @@ class Post(Timestampable, models.Model):
     status = models.IntegerField(choices=STATUS.choices, default=STATUS.DRAFT)
     publish_date = models.DateTimeField(null=True, blank=True)
 
+    @property
+    def is_published(self):
+        return self.status == self.STATUS.PUBLISH and self.publish_date <= timezone.now()
+
     def __str__(self):
         return self.title
