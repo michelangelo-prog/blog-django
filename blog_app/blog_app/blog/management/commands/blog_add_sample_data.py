@@ -9,6 +9,12 @@ from django.db.utils import IntegrityError
 class Command(BaseCommand):
     help = "Add sample posts to user."
 
+    def add_arguments(self, parser):
+        parser.add_argument("username", type=str)
+        parser.add_argument(
+            "quantity", type=self._check_positive, help="number of posts"
+        )
+
     def _check_positive(self, value):
         int_value = int(value)
         if int_value > 0:
@@ -17,12 +23,6 @@ class Command(BaseCommand):
             raise argparse.ArgumentTypeexitError(
                 "%s is an invalid positive int value" % value
             )
-
-    def add_arguments(self, parser):
-        parser.add_argument("username", type=str)
-        parser.add_argument(
-            "quantity", type=self._check_positive, help="number of posts"
-        )
 
     def handle(self, *args, **options):
         username, quantity = options["username"], options["quantity"]
