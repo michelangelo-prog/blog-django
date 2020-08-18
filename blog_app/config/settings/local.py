@@ -4,6 +4,10 @@ from .common import *
 
 INTERNAL_IPS = ["localhost", "0.0.0.0", "127.0.0.1"]
 
+# CORS
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
 # Django Debug Toolbar
 TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
 
