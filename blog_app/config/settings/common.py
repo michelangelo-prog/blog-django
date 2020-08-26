@@ -95,7 +95,7 @@ STATIC_ROOT = os.path.normpath(join(os.path.dirname(BASE_DIR), "blog_app/static"
 
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-    "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S%z",
+    "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S",
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
