@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Post
+from .models import Comment, Post
 
 
 class PostAdmin(admin.ModelAdmin):
@@ -36,4 +36,17 @@ class PostAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ("name", "body", "post", "created_at", "published")
+    list_filter = ("published", "created_at")
+    actions = ["make_published", "make_unpublished"]
+
+    def make_published(self, request, queryset):
+        queryset.update(published=True)
+
+    def make_unpublished(self, request, queryset):
+        queryset.update(published=False)
+
+
 admin.site.register(Post, PostAdmin)
+admin.site.register(Comment, CommentAdmin)

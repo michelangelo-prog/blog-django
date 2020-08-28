@@ -1,9 +1,11 @@
 import argparse
+from datetime import timedelta
 
 from blog_app.blog.factories import PostFactory
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.db.utils import IntegrityError
+from django.utils import timezone
 
 
 class Command(BaseCommand):
@@ -29,7 +31,8 @@ class Command(BaseCommand):
         try:
             user = User.objects.get(username=username)
             for i in range(quantity):
-                PostFactory.create(author=user)
+                publish_date = timezone.now() - timedelta(days=i)
+                PostFactory.create(author=user, publish_date=publish_date)
         except User.DoesNotExist:
             raise CommandError("User with username '%s' does not exist" % username)
         except IntegrityError as e:

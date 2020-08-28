@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
-from .behaviors import Timestampable
+from .behaviors import Creatable, Updatable
 
 
 class PostManager(models.Manager):
@@ -12,7 +12,7 @@ class PostManager(models.Manager):
         ).order_by("-publish_date")
 
 
-class Post(Timestampable, models.Model):
+class Post(Creatable, Updatable, models.Model):
     class STATUS(models.IntegerChoices):
         DRAFT = (0, "draft")
         PUBLISH = (1, "publish")
@@ -35,5 +35,22 @@ class Post(Timestampable, models.Model):
             self.status == self.STATUS.PUBLISH and self.publish_date <= timezone.now()
         )
 
+    def get_published_comments(self):
+        return self.comments.filter(published=True)
+
     def __str__(self):
         return self.title
+
+
+class Comment(Creatable, models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+    name = models.CharField(max_length=80)
+    email = models.EmailField()
+    body = models.TextField()
+    published = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return "Comment {} by {}".format(self.body, self.name)

@@ -1,13 +1,14 @@
-from factory.django import DjangoModelFactory
-from factory import Sequence, SubFactory, Faker
-from django.contrib.auth.models import User
-
-
-from django.utils import timezone
 from datetime import timedelta
 
+from factory import Faker, Sequence, SubFactory
+from factory.django import DjangoModelFactory
+from factory.fuzzy import FuzzyText
+
+from django.contrib.auth.models import User
+from django.utils import timezone
 
 from .models import Post
+
 
 class UserFactory(DjangoModelFactory):
     class Meta:
@@ -37,9 +38,7 @@ class PostFactory(DjangoModelFactory):
     author = SubFactory(UserFactory)
     title = Sequence(lambda n: f"Title {n}")
     slug = Sequence(lambda n: f"title-{n}")
-    summary = Sequence(lambda n: f"Summary {n}")
+    summary = FuzzyText(length=255)
     content = Faker("text")
     status = Post.STATUS.PUBLISH.value
     publish_date = timezone.now() - timedelta(days=1)
-
-
