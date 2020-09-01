@@ -38,7 +38,7 @@ class PostFactory(DjangoModelFactory):
     author = SubFactory(UserFactory)
     title = Sequence(lambda n: f"Title {n}")
     slug = Sequence(lambda n: f"title-{n}")
-    summary = FuzzyText(length=255)
+    summary = Sequence(lambda n: f"Summary-{n}")
     content = Faker("text")
     status = Post.STATUS.PUBLISH.value
     publish_date = timezone.now() - timedelta(days=1)
