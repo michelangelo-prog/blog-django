@@ -29,6 +29,7 @@ class PostsList(APIView):
             serializer = ListPostSerializer(posts, many=True)
             return Response(serializer.data, status.HTTP_200_OK)
 
+post_lists_view = PostsList.as_view()
 
 class PostMixin:
     def get_object(self, slug):
@@ -50,6 +51,7 @@ class PostRetrieve(PostMixin, APIView):
         serializer = RetrievePostSerializer(post)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+post_retrieve_view = PostRetrieve.as_view()
 
 class CommentsList(PostMixin, APIView):
 
@@ -68,3 +70,6 @@ class CommentsList(PostMixin, APIView):
         serializer.validated_data["post"] = post
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+comments_list_view = CommentsList.as_view()
