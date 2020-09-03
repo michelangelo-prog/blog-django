@@ -33,7 +33,7 @@ NOSE_ARGS = [
     "--nologcapture",
     "--with-coverage",
     "--with-progressive",
-    "--cover-package=location",
+    "--cover-package=blog_app",
 ]
 
 # CORS

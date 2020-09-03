@@ -14,7 +14,4 @@ RUN pip install -r requirements/local.txt
 # add app
 COPY . /usr/src/app
 
-# add user
-RUN adduser --disabled-password --gecos '' app_user
-
 EXPOSE 8000
