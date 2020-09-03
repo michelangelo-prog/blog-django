@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from factory import Faker, Sequence, SubFactory
 from factory.django import DjangoModelFactory
-from factory.fuzzy import FuzzyText
 
 from django.contrib.auth.models import User
 from django.utils import timezone

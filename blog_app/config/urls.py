@@ -1,20 +1,15 @@
-from rest_framework.routers import DefaultRouter
-
-from blog_app.blog.api.v1.viewsets import PostViewSet
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path, re_path, reverse_lazy
-from django.views.generic.base import RedirectView
-
-router = DefaultRouter()
-router.register("posts", PostViewSet, basename="post")
+from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/v1/", include(router.urls)),
-    re_path(r"^$", RedirectView.as_view(url=reverse_lazy("api-root"), permanent=False)),
+    path(
+        "api/v1/", include(("blog_app.core.api_v1_urls", "api_v1"), namespace="api_v1")
+    ),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_URL)
+
 
 if settings.DEBUG:
     if "debug_toolbar" in settings.INSTALLED_APPS:

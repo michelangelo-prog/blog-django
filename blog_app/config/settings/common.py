@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     # apps
+    "blog_app.core",
     "blog_app.blog",
 ]
 
