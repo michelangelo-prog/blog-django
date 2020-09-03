@@ -29,12 +29,18 @@ class PostsList(APIView):
             serializer = ListPostSerializer(posts, many=True)
             return Response(serializer.data, status.HTTP_200_OK)
 
+
 post_lists_view = PostsList.as_view()
+
 
 class PostMixin:
     def get_object(self, slug):
         try:
-            return Post.objects.get(slug=slug)
+            post = Post.objects.get(slug=slug)
+            if post.is_published:
+                return post
+            else:
+                raise Http404
         except Post.DoesNotExist:
             raise Http404
 
@@ -51,7 +57,9 @@ class PostRetrieve(PostMixin, APIView):
         serializer = RetrievePostSerializer(post)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 post_retrieve_view = PostRetrieve.as_view()
+
 
 class CommentsList(PostMixin, APIView):
 
