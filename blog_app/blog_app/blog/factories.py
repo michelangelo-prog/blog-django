@@ -6,7 +6,7 @@ from factory.django import DjangoModelFactory
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from .models import Post
+from .models import Post, Comment
 
 
 class UserFactory(DjangoModelFactory):
@@ -40,4 +40,16 @@ class PostFactory(DjangoModelFactory):
     summary = Sequence(lambda n: f"Summary-{n}")
     content = Faker("text")
     status = Post.STATUS.PUBLISH.value
+    publish_date = timezone.now() - timedelta(days=1)
+
+
+class CommentFactory(DjangoModelFactory):
+    class Meta:
+        model = Comment
+
+    post = SubFactory(PostFactory)
+    name = Faker("name")
+    email = Faker("email")
+    body = Faker("text")
+    published = False
     publish_date = timezone.now() - timedelta(days=1)

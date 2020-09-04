@@ -3,7 +3,7 @@ from datetime import timedelta
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from blog_app.blog.factories import PostFactory
+from blog_app.blog.factories import PostFactory, CommentFactory
 from blog_app.blog.models import Post
 from django.urls import reverse
 from django.utils import timezone
@@ -57,6 +57,13 @@ class PostMixin:
             (date + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S"), string
         )
 
+    def _create_unpublished_posts(self):
+        return (
+            self._create_posts_with_past_publish_date_and_with_status_draft(1)
+            + self._create_posts_with_future_publish_date_and_status_published(1)
+            + self._create_posts_with_future_publish_date_and_status_draft(1)
+        )
+
 
 class PostListTests(PostMixin, APITestCase):
     def setUp(self) -> None:
@@ -77,12 +84,13 @@ class PostListTests(PostMixin, APITestCase):
         )
 
     def _compare_post_list_data(self, expected_data, received_data):
+        expected_fields = {"slug", "title", "summary", "publish_date"}
         for expected, received in zip(expected_data, received_data):
+            self.assertSetEqual(expected_fields, set(received.keys()))
             self.assertEqual(expected.slug, received["slug"])
             self.assertEqual(expected.title, received["title"])
             self.assertEqual(expected.summary, received["summary"])
             self._assert_dates(expected.publish_date, received["publish_date"])
-            # self.assertEqual((expected.publish_date + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S"), received["publish_date"])
 
     def test_get_only_published_posts(self):
         response = self.client.get(reverse("api_v1:posts"))
@@ -172,12 +180,6 @@ class PostListTests(PostMixin, APITestCase):
 
 
 class PostTest(PostMixin, APITestCase):
-    def _create_unpublished_posts(self):
-        return (
-            self._create_posts_with_past_publish_date_and_with_status_draft(1)
-            + self._create_posts_with_future_publish_date_and_status_published(1)
-            + self._create_posts_with_future_publish_date_and_status_draft(1)
-        )
 
     def setUp(self) -> None:
         self.number_of_published_posts = 3
@@ -216,21 +218,98 @@ class PostTest(PostMixin, APITestCase):
         self.assertEqual(expected_json, json)
 
 
-# class CommentsListTest(APITestCase):
-#     def test_get_post_comments(self):
-#         pass
+class CommentsListTest(PostMixin, APITestCase):
+
+    def _create_comments_with_past_publish_date(self, post, published, number_of_comments):
+        return [
+            CommentFactory(
+                post=post, published=published,
+                publish_date=timezone.now() - timedelta(days=i + 1)
+            )
+            for i in range(number_of_comments)
+        ]
+
+    def _create_comments_with_future_publish_date(self, post, published, number_of_comments):
+        return [
+            CommentFactory(
+                post=post, published=published,
+                publish_date=timezone.now() + timedelta(days=i + 1)
+            )
+            for i in range(number_of_comments)
+        ]
+
+    def _create_unpublished_comments(self, post):
+        return (
+            self._create_comments_with_past_publish_date(post, False, 1)
+            + self._create_comments_with_future_publish_date(post, True, 1)
+            + self._create_comments_with_future_publish_date(post, False, 1)
+        )
+
+    def setUp(self) -> None:
+        self.number_of_posts = 3
+        self.posts = self._create_posts_with_past_publish_date_and_status_published(self.number_of_posts)
+
+        self.post_1 = self.posts[0]
+        self.number_of_post_1_published_comments = 3
+        self.post_1_published_comments = self._create_comments_with_past_publish_date(self.post_1, True,
+                                                                                      self.number_of_post_1_published_comments)
+        self._create_unpublished_comments(self.post_1)
+
+        self.post_2 = self.posts[1]
+        self._create_unpublished_comments(self.post_2)
+
+        self.unpublished_posts = self._create_unpublished_posts()
+
+    def test_get_comments_for_published_post(self):
+        path = reverse("api_v1:post_comments", args=(self.post_1.slug,))
+        response = self.client.get(path)
+        json = response.json()
+
+        expected_comment_fields = {"name", "body", "publish_date"}
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(self.number_of_post_1_published_comments, len(json))
+        for expected, data in zip(self.post_1_published_comments, json):
+            self.assertSetEqual(expected_comment_fields, set(data.keys()))
+            self.assertEqual(expected.name, data["name"])
+            self.assertEqual(expected.body, data["body"])
+            self._assert_dates(expected.publish_date, data["publish_date"])
+
+        # import ipdb;
+        # ipdb.sset_trace()
+
+    def test_get_empty_list_when_post_has_no_comments(self):
+        for post in self.posts[1:2]:
+            path = reverse("api_v1:post_comments", args=(post.slug,))
+            response = self.client.get(path)
+            json = response.json()
+            self.assertEqual(0, len(json))
+            self.assertEqual(status.HTTP_200_OK, response.status_code)
+
+    def test_404_when_request_not_existing_post(self):
+        path = reverse("api_v1:post_comments", args=("testtest",))
+        response = self.client.get(path)
+
+        json = response.json()
+        expected_json = {"detail": "Not found."}
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+        self.assertEqual(expected_json, json)
+
+    def test_404_when_request_unpublished_posts(self):
+        for post in self.unpublished_posts:
+            path = reverse("api_v1:post_comments", args=(post.slug,))
+            response = self.client.get(path)
+            json = response.json()
+            expected_json = {"detail": "Not found."}
+            self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+            self.assertEqual(expected_json, json)
+
+#     def test_add_comment_to_post(self):
+#         path = reverse("api_v1:post_comments", args=(self.post_1.slug,))
 #
-#     def test_get_empty_list_when_post_has_no_comments(self):
-#         pass
 #
-#     def test_404_when_request_not_existing_post(self):
+#     def test_added_comment_is_not_publish(self):
 #         pass
-#
-#     def test_404_when_request_unpublished_posts(self):
-#         pass
-#
-#     def test_insert_comment_to_post(self):
-#         pass
-#
+# #
 #     def test_400_when_sent_comment_with_invalid_data(self):
 #         pass

@@ -19,8 +19,8 @@ class RetrievePostSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ("name", "body", "email", "created_at")
-        read_only_fields = ("created_at",)
+        fields = ("name", "body", "email", "publish_date")
+        read_only_fields = ("publish_date",)
         extra_kwargs = {
             "email": {"write_only": True},
         }

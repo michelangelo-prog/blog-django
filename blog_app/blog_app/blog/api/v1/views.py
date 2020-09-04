@@ -72,9 +72,9 @@ class CommentsList(PostMixin, APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, slug=None):
-        post = self.get_object(slug)
         serializer = CommentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        post = self.get_object(slug)
         serializer.validated_data["post"] = post
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)

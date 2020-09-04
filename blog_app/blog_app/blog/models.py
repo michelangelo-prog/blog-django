@@ -4,6 +4,8 @@ from django.utils import timezone
 
 from .behaviors import Creatable, Updatable
 
+import datetime
+
 
 class PostManager(models.Manager):
     def get_published_posts(self):
@@ -36,7 +38,7 @@ class Post(Creatable, Updatable, models.Model):
         )
 
     def get_published_comments(self):
-        return self.comments.filter(published=True)
+        return self.comments.filter(published=True, publish_date__lte=timezone.now()).order_by("-publish_date")
 
     def __str__(self):
         return self.title
@@ -48,9 +50,16 @@ class Comment(Creatable, models.Model):
     email = models.EmailField()
     body = models.TextField()
     published = models.BooleanField(default=False)
+    publish_date = models.DateTimeField(default=datetime.datetime.now())
+
+    @property
+    def is_published(self):
+        return (
+                self.published and self.publish_date <= timezone.now()
+        )
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["-publish_date"]
 
     def __str__(self):
         return "Comment {} by {}".format(self.body, self.name)

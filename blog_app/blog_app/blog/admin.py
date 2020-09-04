@@ -37,8 +37,12 @@ class PostAdmin(admin.ModelAdmin):
 
 
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ("name", "body", "post", "created_at", "published")
-    list_filter = ("published", "created_at")
+    list_display = ("name", "body", "post", "created_at", "publish_date", "published", "is_published")
+    readonly_fields = (
+        "created_at",
+        "is_published",
+    )
+    list_filter = ("published", "created_at", "publish_date")
     actions = ["make_published", "make_unpublished"]
 
     def make_published(self, request, queryset):
