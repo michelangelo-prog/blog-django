@@ -1,10 +1,10 @@
+import datetime
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
 from .behaviors import Creatable, Updatable
-
-import datetime
 
 
 class PostManager(models.Manager):
@@ -38,7 +38,9 @@ class Post(Creatable, Updatable, models.Model):
         )
 
     def get_published_comments(self):
-        return self.comments.filter(published=True, publish_date__lte=timezone.now()).order_by("-publish_date")
+        return self.comments.filter(
+            published=True, publish_date__lte=timezone.now()
+        ).order_by("-publish_date")
 
     def __str__(self):
         return self.title
@@ -54,9 +56,7 @@ class Comment(Creatable, models.Model):
 
     @property
     def is_published(self):
-        return (
-                self.published and self.publish_date <= timezone.now()
-        )
+        return self.published and self.publish_date <= timezone.now()
 
     class Meta:
         ordering = ["-publish_date"]

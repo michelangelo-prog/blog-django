@@ -37,7 +37,15 @@ class PostAdmin(admin.ModelAdmin):
 
 
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ("name", "body", "post", "created_at", "publish_date", "published", "is_published")
+    list_display = (
+        "name",
+        "body",
+        "post",
+        "created_at",
+        "publish_date",
+        "published",
+        "is_published",
+    )
     readonly_fields = (
         "created_at",
         "is_published",

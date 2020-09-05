@@ -77,7 +77,9 @@ class CommentsList(PostMixin, APIView):
         post = self.get_object(slug)
         serializer.validated_data["post"] = post
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        data = serializer.data
+        data.pop("publish_date")
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 comments_list_view = CommentsList.as_view()
