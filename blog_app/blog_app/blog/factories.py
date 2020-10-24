@@ -1,12 +1,12 @@
 from datetime import timedelta
 
-from factory import Faker, Sequence, SubFactory
+from factory import Faker, Sequence, SubFactory, post_generation
 from factory.django import DjangoModelFactory
 
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from .models import Comment, Post
+from .models import Comment, Post, Tag
 
 
 class UserFactory(DjangoModelFactory):
@@ -30,6 +30,14 @@ class UserFactory(DjangoModelFactory):
     is_staff = False
 
 
+class TagFactory(DjangoModelFactory):
+    class Meta:
+        model = Tag
+
+    title = Sequence(lambda n: f"tag{n}")
+    slug = Sequence(lambda n: f"tag{n}")
+
+
 class PostFactory(DjangoModelFactory):
     class Meta:
         model = Post
@@ -41,6 +49,15 @@ class PostFactory(DjangoModelFactory):
     content = Faker("text")
     status = Post.STATUS.PUBLISH.value
     publish_date = timezone.now() - timedelta(days=1)
+
+    @post_generation
+    def tags(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for tag in extracted:
+                self.tags.add(tag)
 
 
 class CommentFactory(DjangoModelFactory):

@@ -4,23 +4,31 @@ import factory
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from blog_app.blog.factories import CommentFactory, PostFactory
+from blog_app.blog.factories import CommentFactory, PostFactory, TagFactory
 from blog_app.blog.models import Post
 from django.urls import reverse
 from django.utils import timezone
 
 
 class PostMixin:
+    def _create_post(self, publish_date, status, tags):
+        return PostFactory.create(
+                publish_date=publish_date,
+                status=status,
+                tags=tags
+        )
+
+
     def _create_posts_with_past_publish_date_and_status_published(
-        self, number_of_posts
+        self, number_of_posts, tags
     ):
-        return [
-            PostFactory(
-                publish_date=timezone.now() - timedelta(days=i + 1),
-                status=Post.STATUS.PUBLISH,
-            )
-            for i in range(number_of_posts)
-        ]
+        posts = []
+        for i in range(number_of_posts):
+            publish_date = timezone.now() - timedelta(days=i + 1)
+            post = self._create_post(publish_date, Post.STATUS.PUBLISH, tags)
+            posts.append(post)
+
+        return posts
 
     def _create_posts_with_past_publish_date_and_with_status_draft(
         self, number_of_posts
@@ -58,6 +66,21 @@ class PostMixin:
             (date + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S"), string
         )
 
+    def _assert_tags_contains_required_fields(self, tags):
+        expected_fields = {"title", "slug"}
+        for tag in tags:
+            self.assertSetEqual(expected_fields, set(tag.keys()))
+
+    def _assert_tags(self, expected_tags, tags):
+        self.assertEqual(len(expected_tags), len(tags))
+        for expected_tag in expected_tags:
+            received = False
+            for tag in tags:
+                if expected_tag.title == tag["title"] and expected_tag.slug == tag["slug"]:
+                    received = True
+            self.assertTrue(received)
+
+
     def _create_unpublished_posts(self):
         return (
             self._create_posts_with_past_publish_date_and_with_status_draft(1)
@@ -71,8 +94,12 @@ class PostListTests(PostMixin, APITestCase):
         self.domain = "http://testserver"
         self.number_of_posts = 1
         self.number_of_published_posts = 13
+        self.post_tags = (
+            TagFactory(),
+            TagFactory(),
+        )
         self.published_posts = self._create_posts_with_past_publish_date_and_status_published(
-            self.number_of_published_posts
+            self.number_of_published_posts, self.post_tags
         )
         self._create_posts_with_past_publish_date_and_with_status_draft(
             self.number_of_posts
@@ -85,13 +112,15 @@ class PostListTests(PostMixin, APITestCase):
         )
 
     def _compare_post_list_data(self, expected_data, received_data):
-        expected_fields = {"slug", "title", "summary", "publish_date"}
+        expected_fields = {"slug", "title", "summary", "publish_date", "tags"}
         for expected, received in zip(expected_data, received_data):
             self.assertSetEqual(expected_fields, set(received.keys()))
             self.assertEqual(expected.slug, received["slug"])
             self.assertEqual(expected.title, received["title"])
             self.assertEqual(expected.summary, received["summary"])
             self._assert_dates(expected.publish_date, received["publish_date"])
+            self._assert_tags_contains_required_fields(received["tags"])
+            self._assert_tags(expected.tags.all(), received["tags"])
 
     def test_get_only_published_posts(self):
         response = self.client.get(reverse("api_v1:posts"))
@@ -183,8 +212,13 @@ class PostListTests(PostMixin, APITestCase):
 class PostTest(PostMixin, APITestCase):
     def setUp(self) -> None:
         self.number_of_published_posts = 3
+        self.post_tags = (
+            TagFactory(),
+            TagFactory(),
+        )
         self.published_posts = self._create_posts_with_past_publish_date_and_status_published(
-            self.number_of_published_posts
+            self.number_of_published_posts,
+            self.post_tags,
         )
         self.unpublished_posts = self._create_unpublished_posts()
 
@@ -198,6 +232,27 @@ class PostTest(PostMixin, APITestCase):
         self.assertEqual(post.summary, json["summary"])
         self.assertEqual(post.content, json["content"])
         self._assert_dates(post.publish_date, json["publish_date"])
+        self._assert_tags_contains_required_fields(json["tags"])
+        self._assert_tags(post.tags.all(), json["tags"])
+
+    def test_when_post_contain_another_tags(self):
+        post_tags = (
+            TagFactory(),
+            TagFactory(),
+            TagFactory(),
+        )
+
+        post = self._create_posts_with_past_publish_date_and_status_published(
+            1,
+            post_tags,
+        )[0]
+
+        path = reverse("api_v1:post", args=(post.slug,))
+        response = self.client.get(path)
+        json = response.json()
+
+        self._assert_tags_contains_required_fields(json["tags"])
+        self._assert_tags(post.tags.all(), json["tags"])
 
     def test_404_when_request_unpublished_post(self):
         for post in self.unpublished_posts:
@@ -252,8 +307,12 @@ class CommentsListTest(PostMixin, APITestCase):
 
     def setUp(self) -> None:
         self.number_of_posts = 3
+        self.post_tags = (
+            TagFactory(),
+            TagFactory(),
+        )
         self.posts = self._create_posts_with_past_publish_date_and_status_published(
-            self.number_of_posts
+            self.number_of_posts, self.post_tags
         )
 
         # First post

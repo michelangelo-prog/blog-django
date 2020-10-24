@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Comment, Post
+from .models import Comment, Post, Tag
 
 
 class PostAdmin(admin.ModelAdmin):
@@ -22,6 +22,7 @@ class PostAdmin(admin.ModelAdmin):
         "updated_at",
         "publish_date",
         "is_published",
+        "tags",
     )
     readonly_fields = (
         "created_at",
@@ -32,6 +33,9 @@ class PostAdmin(admin.ModelAdmin):
         "status",
         "created_at",
         "publish_date",
+    )
+    search_fields = (
+        "title",
     )
     ordering = ("-created_at",)
 
@@ -60,5 +64,32 @@ class CommentAdmin(admin.ModelAdmin):
         queryset.update(published=False)
 
 
+class TagAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "slug",
+        "number_of_posts",
+    )
+
+    fields = (
+        "title",
+        "slug",
+        "number_of_posts",
+        "used_in_posts",
+    )
+
+    readonly_fields = (
+        "number_of_posts",
+        "used_in_posts",
+    )
+
+    search_fields = (
+        "title",
+        "slug",
+    )
+
+
+
 admin.site.register(Post, PostAdmin)
 admin.site.register(Comment, CommentAdmin)
+admin.site.register(Tag, TagAdmin)

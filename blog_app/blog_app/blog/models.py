@@ -11,7 +11,24 @@ class PostManager(models.Manager):
     def get_published_posts(self):
         return self.filter(
             status=Post.STATUS.PUBLISH, publish_date__lte=timezone.now()
-        ).order_by("-publish_date")
+        ).order_by("-publish_date").prefetch_related('tags')
+
+
+class Tag(models.Model):
+    title = models.CharField(max_length=75, unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
+
+    @property
+    def number_of_posts(self):
+        return self.post_set.count()
+
+    @property
+    def used_in_posts(self):
+        text = ",\n".join(post.title for post in self.post_set.all())
+        return text if text else "-"
+
+    def __str__(self):
+        return self.title
 
 
 class Post(Creatable, Updatable, models.Model):
@@ -30,6 +47,7 @@ class Post(Creatable, Updatable, models.Model):
     content = models.TextField()
     status = models.IntegerField(choices=STATUS.choices, default=STATUS.DRAFT)
     publish_date = models.DateTimeField(null=True, blank=True)
+    tags = models.ManyToManyField(Tag)
 
     @property
     def is_published(self):
