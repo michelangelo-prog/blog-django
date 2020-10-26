@@ -19,7 +19,9 @@ class PostsList(APIView):
     permission_classes = (AllowAny,)
 
     def get(self, request):
-        posts = Post.objects.get_published_posts()
+        tag_slug = request.query_params.get('tag', None)
+
+        posts = Post.objects.get_published_posts(tag_slug=tag_slug)
         paginator = LimitOffsetPagination()
         try:
             result_page = paginator.paginate_queryset(posts, request)

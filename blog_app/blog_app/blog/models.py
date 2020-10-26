@@ -8,10 +8,19 @@ from .behaviors import Creatable, Updatable
 
 
 class PostManager(models.Manager):
-    def get_published_posts(self):
+    def get_published_posts(self, tag_slug=None):
+        q = self.get_published_posts_queryset()
+        if tag_slug:
+            q = self.filter_queryset_by_tag_slug(q, tag_slug)
+
+        return q.order_by("-publish_date").prefetch_related('tags')
+
+    def get_published_posts_queryset(self):
         return self.filter(
-            status=Post.STATUS.PUBLISH, publish_date__lte=timezone.now()
-        ).order_by("-publish_date").prefetch_related('tags')
+            status=Post.STATUS.PUBLISH, publish_date__lte=timezone.now())
+
+    def filter_queryset_by_tag_slug(self, queryset, slug):
+        return queryset.filter(tags__slug=slug)
 
 
 class Tag(models.Model):

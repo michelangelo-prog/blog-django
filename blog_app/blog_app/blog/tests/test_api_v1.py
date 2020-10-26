@@ -208,6 +208,22 @@ class PostListTests(PostMixin, APITestCase):
             self.published_posts[-expected_number_of_posts:], json["results"]
         )
 
+    def test_get_published_posts_by_tag(self):
+        post_tags = (
+            TagFactory(),
+        )
+
+        posts = self._create_posts_with_past_publish_date_and_status_published(
+            3,
+            post_tags,
+        )
+
+        response = self.client.get(reverse("api_v1:posts"), {"tag": post_tags[0].slug})
+        json = response.json()
+
+        self.assertEqual(len(posts), len(json))
+        self._compare_post_list_data(posts, json)
+
 
 class PostTest(PostMixin, APITestCase):
     def setUp(self) -> None:
